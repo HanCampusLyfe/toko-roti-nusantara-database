@@ -198,18 +198,20 @@
 
                 if (detailError) throw detailError;
 
+                // D. TRIGGER AUTOMATION (Make.com / Telegram)
                 const webhookUrl = 'https://hook.eu1.make.com/mhdwdy95a278uwgt1ctork6683eq8fmi'; 
-                if (webhookUrl !== 'https://hook.eu1.make.com/mhdwdy95a278uwgt1ctork6683eq8fmi') {
-                    fetch(webhookUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            event: 'transaksi_baru',
-                            no_transaksi: no_trx,
-                            total: total_bayar,
-                            item_terjual: cart.length
-                        })
-                    }).catch(err => console.log("Info: Automation blm tersambung", err));
+                
+                // Langsung tembak datanya ke Make.com tanpa syarat!
+                fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event: 'transaksi_baru',
+                        no_transaksi: no_trx,
+                        total: total_bayar,
+                        item_terjual: cart.length
+                    })
+                }).catch(err => console.log("Info: Automation gagal", err));
                 }
 
                 alert(`✅ TRANSAKSI BERHASIL!\n\nStruk ${no_trx} sudah tersimpan permanen di Supabase.`);
