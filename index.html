@@ -162,10 +162,17 @@
             btn.disabled = true;
 
             try {
+                // Siapin data utama
                 const no_trx = 'TRX-' + Math.floor(Date.now() / 1000); 
                 const id_pegawai_dummy = 1; 
+                const nama_kasir = "Rina Maharani";
                 const total_bayar = cart.reduce((sum, item) => sum + item.subtotal, 0);
+                
+                // Ambil jam order & rincian pesanan buat di Telegram
+                const waktuOrder = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+                const rincianItems = cart.map(item => `▪️ ${item.nama_produk} (${item.jumlah}x) - ${formatRp(item.subtotal)}`).join('\n');
 
+                // 1. Insert ke tabel Transaksi
                 const { data: trxData, error: trxError } = await supabase
                     .from('transaksi')
                     .insert([{
@@ -180,9 +187,9 @@
                     .select(); 
 
                 if (trxError) throw trxError;
-
                 const id_transaksi_baru = trxData[0].id_transaksi;
 
+                // 2. Insert ke tabel Detail Transaksi
                 const detailPayload = cart.map(item => ({
                     id_transaksi: id_transaksi_baru,
                     id_produk: item.id_produk,
@@ -198,7 +205,7 @@
 
                 if (detailError) throw detailError;
 
-                // Eksekusi Webhook Make.com tanpa syarat!
+                // 3. Eksekusi Webhook Make.com (Data Super Lengkap)
                 const webhookUrl = 'https://hook.eu1.make.com/mhdwdy95a278uwgt1ctork6683eq8fmi'; 
                 fetch(webhookUrl, {
                     method: 'POST',
@@ -206,8 +213,10 @@
                     body: JSON.stringify({
                         event: 'transaksi_baru',
                         no_transaksi: no_trx,
-                        total: total_bayar,
-                        item_terjual: cart.length
+                        tanggal: waktuOrder,
+                        kasir: nama_kasir,
+                        total: formatRp(total_bayar),
+                        detail_items: rincianItems
                     })
                 }).catch(err => console.log("Info: Automation blm tersambung", err));
 
@@ -216,7 +225,7 @@
                 renderCart();
 
             } catch (err) {
-                alert("❌ ERROR DATABASE: " + err.message + "\n\n(Cek apakah ID Pegawai '1' tersedia di tabel pegawai lu, atau matikan RLS sementara di Supabase)");
+                alert("❌ ERROR DATABASE: " + err.message);
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
