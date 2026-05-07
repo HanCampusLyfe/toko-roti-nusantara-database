@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Koneksi Supabase</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; }
+        #status { font-size: 20px; font-weight: bold; padding: 20px; border-radius: 10px; display: inline-block;}
+    </style>
+</head>
+<body>
+
+    <h2>Cek Koneksi Database Toko Roti Nusantara 🍞</h2>
+    <div id="status" style="background-color: #f0f0f0;">⏳ Menghubungkan ke Supabase...</div>
+
+    <script type="module">
+        // Import kunci yang udah lu bikin tadi
+        import { supabase } from './supabase.js';
+
+        async function cekKoneksi() {
+            try {
+                // Kita coba ketuk pintu tabel 'produk'
+                const { data, error } = await supabase.from('produk').select('*').limit(1);
+
+                const statusDiv = document.getElementById('status');
+
+                if (error) {
+                    statusDiv.innerHTML = "❌ KONEKSI GAGAL!<br><span style='font-size:14px; font-weight:normal;'>" + error.message + "</span>";
+                    statusDiv.style.backgroundColor = "#ffebee";
+                    statusDiv.style.color = "#c62828";
+                } else {
+                    statusDiv.innerHTML = "✅ KONEKSI BERHASIL!<br><span style='font-size:14px; font-weight:normal;'>Berhasil narik data. (Tabel aman)</span>";
+                    statusDiv.style.backgroundColor = "#e8f5e9";
+                    statusDiv.style.color = "#2e7d32";
+                    console.log("Data testing:", data);
+                }
+            } catch (err) {
+                document.getElementById('status').innerHTML = "❌ ERROR FATAL!<br><span style='font-size:14px; font-weight:normal;'>" + err.message + "</span>";
+            }
+        }
+
+        cekKoneksi();
+    </script>
+</body>
+</html>
