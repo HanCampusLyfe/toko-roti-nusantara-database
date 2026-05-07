@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS Gocha Bakery</title>
+    <title>Roti Nusantara POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Animasi loading sederhana */
@@ -16,7 +16,7 @@
     <div class="flex-1 flex flex-col h-full">
         <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center z-10">
             <div>
-                <h1 class="text-2xl font-bold text-emerald-600">🍞 Gocha Bakery POS</h1>
+                <h1 class="text-2xl font-bold text-emerald-600">🍞 Roti Nusantara POS</h1>
                 <p class="text-sm text-slate-500">Kasir: Rina Maharani (Kasir Utama)</p>
             </div>
             <div id="loadingIndicator" class="hidden items-center gap-2 text-emerald-600 font-semibold">
@@ -56,26 +56,20 @@
     </div>
 
     <script type="module">
-        // Import koneksi Supabase yang udah dibikin
         import { supabase } from './supabase.js';
 
         let products = [];
         let cart = [];
 
-        // Format Rupiah
         const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 
-        // 1. Fungsi Narik Data dari Supabase
         async function fetchProducts() {
             document.getElementById('loadingIndicator').classList.remove('hidden');
             document.getElementById('loadingIndicator').classList.add('flex');
             
             try {
-                // Mengambil data dari tabel produk yang aktif
                 const { data, error } = await supabase.from('produk').select('*').eq('is_aktif', true);
-                
                 if (error) throw error;
-                
                 products = data;
                 renderProducts();
             } catch (err) {
@@ -86,7 +80,6 @@
             }
         }
 
-        // 2. Fungsi Menampilkan Produk ke Layar
         function renderProducts() {
             const grid = document.getElementById('productGrid');
             grid.innerHTML = '';
@@ -110,7 +103,6 @@
             });
         }
 
-        // 3. Fungsi Tambah ke Keranjang
         window.addToCart = function(product) {
             const existing = cart.find(item => item.id_produk === product.id_produk);
             if (existing) {
@@ -126,13 +118,11 @@
             renderCart();
         }
 
-        // 4. Fungsi Hapus dari Keranjang
         window.removeFromCart = function(id) {
             cart = cart.filter(item => item.id_produk !== id);
             renderCart();
         }
 
-        // 5. Fungsi Update Tampilan Keranjang
         function renderCart() {
             const container = document.getElementById('cartContainer');
             container.innerHTML = '';
@@ -163,23 +153,19 @@
             document.getElementById('totalLabel').innerText = formatRp(total);
         }
 
-        // 6. Fungsi Checkout (Real Insert ke Supabase + Trigger Automation)
         window.prosesCheckout = async function() {
             if(cart.length === 0) return alert("Keranjang kosong!");
 
-            // Ubah tampilan tombol biar kelihatan lagi mikir
             const btn = document.querySelector('button[onclick="prosesCheckout()"]');
             const originalText = btn.innerText;
             btn.innerText = "⏳ Memproses ke Database...";
             btn.disabled = true;
 
             try {
-                // A. Siapin Data Transaksi Utama
-                const no_trx = 'TRX-' + Math.floor(Date.now() / 1000); // Bikin ID unik
-                const id_pegawai_dummy = 1; // Asumsi Kasir ID 1 (Pastiin ada pegawai dgn ID 1 di tabel lu)
+                const no_trx = 'TRX-' + Math.floor(Date.now() / 1000); 
+                const id_pegawai_dummy = 1; 
                 const total_bayar = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
-                // B. Insert ke Tabel `transaksi`
                 const { data: trxData, error: trxError } = await supabase
                     .from('transaksi')
                     .insert([{
@@ -191,13 +177,12 @@
                         diskon: 0,
                         total_bayar: total_bayar
                     }])
-                    .select(); // Penting: select() untuk ngambil ID transaksi yang baru kebuat
+                    .select(); 
 
                 if (trxError) throw trxError;
 
                 const id_transaksi_baru = trxData[0].id_transaksi;
 
-                // C. Siapin dan Insert ke Tabel `detail_transaksi`
                 const detailPayload = cart.map(item => ({
                     id_transaksi: id_transaksi_baru,
                     id_produk: item.id_produk,
@@ -212,12 +197,8 @@
 
                 if (detailError) throw detailError;
 
-                // D. TRIGGER AUTOMATION (Make.com / n8n)
-                // Ganti URL ini kalau lu udah dapet dari Make.com
                 const webhookUrl = 'MASUKIN_URL_WEBHOOK_DARI_MAKE_COM_DISINI'; 
-                
                 if (webhookUrl !== 'MASUKIN_URL_WEBHOOK_DARI_MAKE_COM_DISINI') {
-                    // Kirim data struk ke robot automation
                     fetch(webhookUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -230,7 +211,6 @@
                     }).catch(err => console.log("Info: Automation blm tersambung", err));
                 }
 
-                // E. Selesai & Reset
                 alert(`✅ TRANSAKSI BERHASIL!\n\nStruk ${no_trx} sudah tersimpan permanen di Supabase.`);
                 cart = [];
                 renderCart();
@@ -238,13 +218,11 @@
             } catch (err) {
                 alert("❌ ERROR DATABASE: " + err.message + "\n\n(Cek apakah ID Pegawai '1' tersedia di tabel pegawai lu, atau matikan RLS sementara di Supabase)");
             } finally {
-                // Kembalikan tombol seperti semula
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
         }
 
-        // Jalankan fungsi tarik data saat web dibuka
         fetchProducts();
     </script>
 </body>
